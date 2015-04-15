@@ -1,0 +1,12 @@
+apps
+config
+doc
+guideline
+lib
+log
+report
+resource
+tools
+
+*.pyc
+*.pyo
