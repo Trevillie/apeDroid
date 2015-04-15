@@ -1,13 +1,13 @@
 ## ad-hoc apk crawler
 
 #### What it does:
-Download top 105 apks and their related information from a variant of categories on http://www.anzhi.com.
+Download top 100 apks and their related information from a variant of categories on http://www.anzhi.com.
 
 #### Just to mention:
 The crawler is single threaded.
-The crawler is constructed with two crawlers and one downloader.
+The downloader is multi-threaded.
+The crawler is constructed with two crawlers and one downloader. One of the crawlers is yet not implemented.
 
-#### What it used:
-beautifulsoup 4.3.2
-python 2.7.3
-wget
+#### How to use:
+First, run sub.py in ./crawler/sub/ to update app list.
+Then, run run.py in ./crawler/downloader/ to download marked apps.

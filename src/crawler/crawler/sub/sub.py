@@ -1,5 +1,6 @@
+#!/usr/bin/python
 # -*- coding:utf8 -*-  
-  
+
 from __future__ import print_function
 from bs4 import BeautifulSoup  
 import urllib2
@@ -26,6 +27,7 @@ def main():
 
   with open(categories_file_path) as tasks:
     for line in tasks:
+      count = 0
       [category_name, category_url] = line.strip().split()
       print("processing category " + category_name + " from " + category_url)
 

@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding:utf8 -*-
 
 import sys
@@ -113,7 +114,6 @@ def get_undownloaded_url(apk_list):
     undownloaded_urls = []
     with open(apk_list) as apks:
       for apk in apks:
-        print apk
         [rank, name, version, down_num, url] = apk.strip().split("^")
         undownloaded_urls.append([rank, url, name])
     return undownloaded_urls
