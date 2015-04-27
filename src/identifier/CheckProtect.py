@@ -63,8 +63,6 @@ class CheckProtect():
     print "THE ratio : " + str(exclude_ratio)
     print "OTHER ratio : " + str(1-include_ratio)
 
-
-
     if self.protectflag == "":
       if exclude_ratio > 0.5:
         self.protectflag = u"疑似未知加密"
@@ -78,4 +76,5 @@ class CheckProtect():
 
 
 if __name__ == "__main__":
-  print CheckProtect('./054.apk', "./unzipdir/").get_protector_name()
+  print CheckProtect('../../apps/news.list/001.apk',
+                     "../../temp/unzipdir/news_reading/").get_protector_name()
