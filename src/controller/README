@@ -1,0 +1,8 @@
+need to refactor the code A LOT
+just a draft here, for backup
+                   
+             |      The System Runtime (AVD)
+             |        |      |      |
+             |   memory   process   logging
+apk file     | 
+apk runtime  |
