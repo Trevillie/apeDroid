@@ -2,23 +2,17 @@ import subprocess
 import re
 
 class MemInfo:
+  """
+  Stateless Memory Information Utility Class.
+  ! May : Instance Method -> Static Method
+  """
   mem_re = re.compile("^(\d+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+).*$")
-  mem_info = None
-  # lock
-
 
   def __init__(self):
-    self.update()
+    print "MemInfo Service Started..."
 
 
-  def check_device(self):
-    return True
-
-
-  def update(self):
-    if not self.check_device():
-      self.err("ERR : device does not exist.")
-      return False
+  def get_mem_info(self):
     p = subprocess.Popen(["adb", "shell", "procrank"], stdout=subprocess.PIPE)
     p.wait()
     out, err = p.communicate()
@@ -29,21 +23,18 @@ class MemInfo:
         match = MemInfo.mem_re.match(line.strip())
         if not match is None:
           pid, vss, rss, pss, uss, cmd = match.groups()
-          new_mem.append([pid, pss, uss, cmd])
-      # acquire lock
-      MemInfo.mem_info = new_mem
-      # release lock
+          new_mem.append({
+            "pid" : pid,
+            "pss" : pss,
+            "uss" : uss,
+            "cmd" : cmd,
+          })
+      return new_mem
     else:
-      self.err(err)
-      return False
-
-    return True
-
-
-  def err(self, msg):
-    print msg
+      print "Error doing procrank..."
+      return []
 
 
 if __name__ == "__main__":
   mi = MemInfo()
-  print mi.mem_info
+  print mi.get_mem_info()
