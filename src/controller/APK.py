@@ -4,6 +4,7 @@ import subprocess
 import os
 from zipfile import BadZipfile
 from xml.dom import minidom
+from time import sleep
 
 from androguard import apk
 from androguard import dvm
@@ -19,7 +20,7 @@ class ApeDroidApkError(Exception):
 class APKRuntime:
 
   def __init__(self, apk_obj):
-    self.apk = apk.obj
+    self.apk = apk_obj
     self.installed = False
 
 
@@ -67,6 +68,7 @@ class APKRuntime:
     else:
       to_start = self.apk.main_activity
     to_start = self.apk.package_name + "/" + to_start
+    print "Activity to start : ", to_start
 
     p = subprocess.Popen(["adb", "shell", "am", "start", "-n", to_start],
                          stdout=subprocess.PIPE)
@@ -153,3 +155,8 @@ class APK:
 if __name__ == "__main__":
   processor = APK("./done.apk")
   print processor.size
+  apk_runtime = APKRuntime(processor)
+  apk_runtime.start()
+  # apk_runtime.install()
+  # sleep(10)
+  # apk_runtime.uninstall()
