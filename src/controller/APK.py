@@ -61,13 +61,7 @@ class APKRuntime:
       
 
   def start(self):
-    if not "." in self.apk.main_activity:
-      self.apk.main_activity = "." + self.apk.main_activity
-    if self.apk.main_activity.startswith("."):
-      to_start = self.apk.package_name + self.apk.main_activity
-    else:
-      to_start = self.apk.main_activity
-    to_start = self.apk.package_name + "/" + to_start
+    to_start = self.apk.package_name + "/" + self.apk.main_activity
     print "Activity to start : ", to_start
 
     p = subprocess.Popen(["adb", "shell", "am", "start", "-n", to_start],
@@ -107,6 +101,12 @@ class APK:
         self.permission_details = a.get_details_permissions_new()
         self.permissions        = [perm["name"] for perm in self.permission_details]
         self.main_activity      = a.get_main_activity()
+
+        if not "." in self.main_activity:
+          self.main_activity = "." + self.main_activity
+        if self.main_activity.startswith("."):
+          self.main_activity = self.package_name + self.main_activity
+
         self.process            = self.get_process(a)
         
         #vm = dvm.DalvikVMFormat(a.get_dex())

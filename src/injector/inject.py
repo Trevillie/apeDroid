@@ -1,8 +1,27 @@
 import os
-from shutil import move
+from shutil import move, copyfile
 
 
-def inject_main_activity(path, phosphor):
+def name2path(smali_path, activity_name):
+  """
+  activity_name is fully qualified.
+  """
+  return os.path.join(smali_path, activity_name.replace(".", "/")) + ".smali"
+
+
+def place_injector(place_dir="../factory/reactor/apk/smali"):
+
+  if os.path.exists(place_dir):
+    injector_path = "./Injector.smali"
+    _, file = os.path.split(injector_path)
+    copyfile(injector_path, os.path.join(place_dir, file))
+    return True
+  else:
+    print "Specified Directory Does Not Exists... Injector Not Placed..."
+    return False
+
+
+def inject_main_activity(path, phosphor="./to_add.smali"):
 
   is_inside = False
   is_instruction = False
@@ -37,5 +56,6 @@ def inject_main_activity(path, phosphor):
 
 
 if __name__ == "__main__":
-  inject_main_activity("./before.smali", "./to_add.smali")
-  pass
+  #inject_main_activity("./before.smali", "./to_add.smali")
+  print name2path("../factory/reactor/apk/smali",
+                  "com.tencent.news.activity.SplashActivity")

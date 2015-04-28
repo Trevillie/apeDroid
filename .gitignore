@@ -19,3 +19,4 @@ temp
 src/util/
 src/injector/injector_gen/android.jar
 src/injector/injector_gen/baksmali.jar
+src/factory/
