@@ -1,0 +1,81 @@
+## Preprocess
+To test different apk files, you would have to run the protecting process yourself and manually put things in order. Here are the things you need to know.
+
+##### Step ZERO
+Make sure you have ENOUGH free space on your disk. The preprocess step can be very space consuming. After that, edit vendor_list, which contains the vendor names you're going to test on.
+A list sample could be:
+
+```
+baidu
+tecent
+360
+ijiami
+bangcle
+
+```
+
+##### Step I
+Put your original apk file in ori_apk file. Then, run multiply.py. The script initialize the file structure in ./samples for you and produce three apk files:
+
+```
+xx_inj.apk
+xx_ori.apk
+xx_res.apk
+```
+
+Have these three files protected by vendors you're interested in, and place them back as specified below:
+
+```
+├── samples
+│   └── name_1
+│       ├── baidu
+│       │   ├── tamper
+│       │   ├── xx_inj_baidu.apk
+│       │   ├── xx_ori_baidu.apk
+│       │   └── xx_res_baidu.apk
+│       ├── bangcle
+│       │   ├── tamper
+│       │   ├── xx_inj_bangcle.apk
+│       │   ├── xx_ori_bangcle.apk
+│       │   └── xx_res_bangcle.apk
+│       ├── xx_inj.apk
+│       ├── xx_ori.apk
+│       └── xx_res.apk
+
+```
+
+##### Step II
+Run tamper.py to produce tampered samples for anti-tampering test, which would result in a structure like this:
+
+```
+└── name_1
+    ├── baidu
+    │   ├── tamper
+    │   │   ├── xx_ori_baidu_man.apk
+    │   │   ├── xx_ori_baidu_res.apk
+    │   │   ├── xx_ori_baidu_sma.apk
+    │   │   └── xx_ori_baidu_so.apk
+    │   ├── xx_inj_baidu.apk
+    │   ├── xx_ori_baidu.apk
+    │   └── xx_res_baidu.apk
+    ├── bangcle
+    │   ├── tamper
+    │   │   ├── xx_ori_bangcle_man.apk
+    │   │   ├── xx_ori_bangcle_res.apk
+    │   │   ├── xx_ori_bangcle_sma.apk
+    │   │   └── xx_ori_bangcle_so.apk
+    │   ├── xx_inj_bangcle.apk
+    │   ├── xx_ori_bangcle.apk
+    │   └── xx_res_bangcle.apk
+    ├── tamper
+    │   ├── xx_ori_man.apk
+    │   ├── xx_ori_res.apk
+    │   ├── xx_ori_sma.apk
+    │   └── xx_ori_so.apk
+    ├── xx_inj.apk
+    ├── xx_ori.apk
+    └── xx_res.apk
+```
+
+##### Step III
+Preprocessing is done. Go back to main workflow.
