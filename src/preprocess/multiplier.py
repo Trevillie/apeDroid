@@ -2,8 +2,12 @@ import os
 from shutil import copyfile
 
 
+def rel(relpath):
+  return os.path.join(os.path.dirname(os.path.abspath(__file__)),relpath)
+
+
 def get_vendor_list():
-  vendor_list = "./vendor_list"
+  vendor_list = rel("./vendor_list")
   if not os.path.exists(vendor_list):
     raise IOError
   vl = []
@@ -24,38 +28,17 @@ def mkdir(path):
     return False
 
 
-def init_file_structure(name, vl, path="./samples"):
+def init_file_structure(name, vl, path=rel("./samples")):
   apk_path = os.path.join(path, name)
   mkdir(apk_path)
   vl.append("")
   for vendor in vl:
     p = os.path.join(apk_path, vendor, "tamper")
     mkdir(p)
-  return True
-
-
-# suppose all params right here
-def generate_ori(path, place_dir):
-  if os.path.exists(place_dir):
-    _, file = os.path.split(path)
-    copyfile(path, os.path.join(place_dir, file))
-  else:
-    raise IOError
-
-
-def generate_res(path, place_dir):
-  pass
-
-
-def generate_inj(path, place_dir):
-  pass
-  
+  return apk_path
 
 
 if __name__ == "__main__":
-  vl =  get_vendor_list()
+  vl = get_vendor_list()
   print vl
   init_file_structure("test", vl)
-
-
-

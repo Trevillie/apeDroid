@@ -6,7 +6,8 @@ import subprocess as sp
 
 
 def main():
-  store_base_path = "../../../apps/"
+  #store_base_path = "../../../apps/"
+  store_base_path = "/host/apps/"
   index_base_path = "../apks/"
   names = os.listdir(index_base_path)
 

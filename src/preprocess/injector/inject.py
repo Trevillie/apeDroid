@@ -2,17 +2,23 @@ import os
 from shutil import move, copyfile
 
 
-def name2path(smali_path, activity_name):
+def rel(relpath):
+  return os.path.join(os.path.dirname(os.path.abspath(__file__)),relpath)
+
+mutiplier_smali_path = rel("../factory/multiplier/apk/smali")
+reactor_smali_path = rel("../factory/reactor/apk/smali")
+
+def name2path(activity_name, smali_path=mutiplier_smali_path):
   """
   activity_name is fully qualified.
   """
   return os.path.join(smali_path, activity_name.replace(".", "/")) + ".smali"
 
 
-def place_injector(place_dir="../factory/reactor/apk/smali"):
-
+def place_injector(place_dir=mutiplier_smali_path):
+  print place_dir
   if os.path.exists(place_dir):
-    injector_path = "./Injector.smali"
+    injector_path = rel("./Injector.smali")
     _, file = os.path.split(injector_path)
     copyfile(injector_path, os.path.join(place_dir, file))
     return True
@@ -21,7 +27,7 @@ def place_injector(place_dir="../factory/reactor/apk/smali"):
     return False
 
 
-def inject_main_activity(path, phosphor="./to_add.smali"):
+def inject_main_activity(path, phosphor=rel("./to_add.smali")):
 
   is_inside = False
   is_instruction = False
@@ -57,5 +63,4 @@ def inject_main_activity(path, phosphor="./to_add.smali"):
 
 if __name__ == "__main__":
   #inject_main_activity("./before.smali", "./to_add.smali")
-  print name2path("../factory/reactor/apk/smali",
-                  "com.tencent.news.activity.SplashActivity")
+  pass
