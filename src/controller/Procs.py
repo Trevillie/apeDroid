@@ -106,7 +106,8 @@ class Procs:
     procs = self.get_new_ps()
     ps_in_dict = [self._tup2dict(proc) for proc in procs]
     pids = [ps["pid"] for ps in ps_in_dict if user == ps["user"]]
-    return pids
+    names = [ps["name"] for ps in ps_in_dict if user == ps["user"]]
+    return pids, names
 
 
   def kill_process(self, pid):
@@ -128,7 +129,7 @@ class Procs:
   def kill_user(self, user):
     count = 3
     for i in range(count):
-      pids = self.get_user_procs(user)
+      pids, _ = self.get_user_procs(user)
       if len(pids) > 0:
         for pid in pids:
           self.kill_process(pid)
@@ -137,6 +138,13 @@ class Procs:
         return True
     print "Seems impossible to kill", user, "this way... Failed."
     return False
+
+
+  def is_alive(self, name):
+    procs = self.get_new_ps()
+    ps_in_dict = [self._tup2dict(proc) for proc in procs]
+    names = [ps["name"] for ps in ps_in_dict]
+    return (name in names)
 
 
 if __name__ == "__main__":

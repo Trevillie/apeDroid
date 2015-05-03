@@ -34,6 +34,21 @@ class MemInfo:
       print "Error doing procrank..."
       return []
 
+  
+  def get_pids_mem(self, mem_infos, pids, verbose=True):
+    pss = [mi["pss"] for mi in mem_infos if mi["pid"] in pids]
+    uss = [mi["uss"] for mi in mem_infos if mi["pid"] in pids]
+    if verbose:
+      print "memory information for", pids
+      print "pss :", pss
+      print "uss :", uss
+    pss_sum = sum([int(m[:-1]) for m in pss])
+    uss_sum = sum([int(m[:-1]) for m in uss])
+    if verbose:
+      print "pss all together :", pss_sum, "K"
+      print "uss all together :", uss_sum, "K"
+    return pss_sum, uss_sum
+
 
 if __name__ == "__main__":
   mi = MemInfo()
