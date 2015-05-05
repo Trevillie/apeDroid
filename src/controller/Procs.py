@@ -17,6 +17,7 @@ class Procs:
       self.init_ps = ps
       self.last_ps = ps
       self.this_ps = ps
+      self.zygote_pid = self.get_zygote_pid()
       print "Initialization Succeeded."
     else:
       # raise Error
@@ -87,6 +88,23 @@ class Procs:
     pass
 
 
+  def get_proc_info(self, pid):
+    procs = self.get_new_ps()
+    ps_in_dict = [self._tup2dict(proc) for proc in procs]
+    proc_info = [ps for ps in ps_in_dict if pid == ps["pid"]]
+    if proc_info == []:
+      return None
+    else:
+      return proc_info[0]
+
+  
+  def get_procs_info(self, pids):
+    procs = self.get_new_ps()
+    ps_in_dict = [self._tup2dict(proc) for proc in procs]
+    procs_info = [ps for ps in ps_in_dict if ps["pid"] in pids]
+    return procs_info
+
+
   def get_user(self, package_name):
     """
     user = p.get_user("com.ss.android.article.news")
@@ -109,6 +127,25 @@ class Procs:
     names = [ps["name"] for ps in ps_in_dict if user == ps["user"]]
     return pids, names
 
+
+  def get_zygote_pid(self):
+    procs = self.get_new_ps()
+    ps_in_dict = [self._tup2dict(proc) for proc in procs]
+    pids = [ps["pid"] for ps in ps_in_dict if "zygote" == ps["name"]
+                                              and "root" == ps["user"]]
+    if pids != []:
+      return pids[0]
+    else:
+      raise OSError
+
+
+  def get_main_process_info(self, package_name):
+    procs = self.get_new_ps()
+    ps_in_dict = [self._tup2dict(proc) for proc in procs]
+    pss = [ps for ps in ps_in_dict if package_name == ps["name"]
+                                      and self.zygote_pid == ps["ppid"]]
+    return pss
+    
 
   def kill_process(self, pid):
     p = subprocess.Popen(["adb", "shell", "kill", str(pid)], stdout=subprocess.PIPE)
@@ -141,10 +178,52 @@ class Procs:
 
 
   def is_alive(self, name):
+    """
+    Asks whether an application is alive or not.
+    Be careful, this is not strict for process name.
+    """
     procs = self.get_new_ps()
     ps_in_dict = [self._tup2dict(proc) for proc in procs]
     names = [ps["name"] for ps in ps_in_dict]
     return (name in names)
+
+
+  def process_trace_info(self, pid):
+    p = subprocess.Popen(["adb", "shell", "cat", "/proc/"+str(pid)+"/status"],
+                         stdout=subprocess.PIPE)
+    p.wait()
+    out, err = p.communicate()
+
+    if err is None:
+      trace_re = re.compile("^TracerPid:\s*(\d+).*$")
+      for line in out.split("\r\n"):
+        match = trace_re.match(line.strip())
+        if not match is None:
+          # print match.group(1)
+          return match.group(1)
+    else:
+      raise OSError
+
+
+  def strace_process(self, pid, t=1):
+    p = subprocess.Popen(["adb", "shell", "strace", "-p", str(pid)],
+                         stdout=subprocess.PIPE)
+    sleep(t)
+    p.terminate()
+    out, err = p.communicate()
+    return_code = p.returncode
+    print return_code
+
+    if err is None:
+      if return_code == 0:
+        if "detached" in out.split("\r\n")[-2]:
+          return "died"
+        else:
+          return "fail"
+      else:
+        return "succ"
+    else:
+      raise OSError
 
 
 if __name__ == "__main__":
@@ -152,4 +231,7 @@ if __name__ == "__main__":
   # sleep(10)
   # print p.compare_ori()
   # p.kill_process(1399)
-  p.kill_user("u0_a52")
+  # p.kill_user("u0_a52")
+  # p.process_trace_info(1167)
+  # p.strace_process(24078, 10)
+  print p.get_main_process_info("com.ss.android.article.news")

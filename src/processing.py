@@ -108,7 +108,71 @@ def handle_sample(tests, sample, procs, mems, logs, verbose=True):
       pss, uss = mems.get_pids_mem(mems.get_mem_info(), pids, verbose=True)
       sleep(3)
 
+    # anti-bebugging
+    print 
+    print "-------------------------------"
+    print "Anti-Debugging Test"
+    u = procs.get_user(apk.package_name)
+    pids, names = procs.get_user_procs(u)
+    mpis = procs.get_main_process_info(apk.package_name)
+    if len(mpis) == 1:
+      main_process_info = mpis[0]
+      
+      tracerpid = procs.process_trace_info(main_process_info["pid"])
+      print "TracerPid for", main_process_info["pid"], "is", tracerpid
+
+      if tracerpid == "0":
+        print "The main process is not being traced by any other process now."
+        print "Try stracing", main_process_info["pid"]
+        return_code = procs.strace_process(main_process_info["pid"], 8)
+        if return_code == "succ":
+          print "Straced Successfully!"
+          print "No Anti-Debugging tricks found on the process."
+        elif return_code == "died":
+          print "Straced Attached. But process terminates itself."
+          print "Anti-Debugging by process suiside after attachment."
+        elif return_code == "fail":
+          print "Strace did not attached successfully..."
+          print "This is strange in this circumstance, try again later..."
+      else:
+        print "Process now being traced by", tracerpid
+        proc_info = procs.get_proc_info(tracerpid)
+        print proc_info
+        if proc_info["ppid"] == main_process_info["pid"]:
+          print "Main process is traced by its child process."
+        t_pid = procs.process_trace_info(proc_info["pid"])
+        print "TracerPid for", proc_info["pid"], "is", t_pid
+
+        # try killing the watching process
+        print "Killing watching process", tracerpid
+        procs.kill_process(tracerpid)
+        sleep(5)
+        if procs.is_alive(main_process_info["name"]):
+          print "Main process still runs."
+          print "The main process is not being traced by any other process now."
+          print "Try stracing", main_process_info["pid"]
+          return_code = procs.strace_process(main_process_info["pid"], 8)
+          if return_code == "succ":
+            print "Straced Successfully!"
+            print "No Anti-Debugging tricks other than tracing each other is found."
+          elif return_code == "died":
+            print "Straced Attached. But process terminates itself."
+            print "Anti-Debugging by process suiside after attachment."
+          elif return_code == "fail":
+            print "Strace did not attached successfully..."
+            print "This is strange in this circumstance, try again later..."
+        else:
+          print "Main process suisides after the struture breaks apart."
+
+      print
+      print "Anti-Debugging Test Ends here."
+
+    else:
+      print "More than one main process..."
+      print "Skipping Anti_Debugging Test..."
+
     # clean things up
+    sleep(5)
     apk_runtime.uninstall()
 
   ##### inj
@@ -166,4 +230,4 @@ if __name__ == "__main__":
     sample = get_sample_structure(sample_path)
     pp.pprint(sample)
 
-    handle_sample(["inj"], sample, proc_service, mem_service, log_service)
+    handle_sample(["ori"], sample, proc_service, mem_service, log_service)
