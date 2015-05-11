@@ -3,6 +3,7 @@
 """
 
 import os
+import sys
 import subprocess
 from shutil import copyfile, rmtree, move
 from controller.APK import APK
@@ -15,6 +16,7 @@ def rel(relpath):
   return os.path.join(os.path.dirname(os.path.abspath(__file__)),relpath)
 
 place_dir = rel("./preprocess/factory/multiplier/")
+script_dir = rel("./")
 
 def u_list_dir(path):
   """
@@ -30,40 +32,51 @@ def u_list_dir(path):
 
 def multiply():
   apk_paths = u_list_dir(rel("./preprocess/ori_apk/"))
+  broken_list = []
   for apk_path in apk_paths:
-    apk = APK(apk_path)
-    # something can be done here
-    package_name = apk.package_name
-    main_activity = apk.main_activity     # fully-qualified name here
-    print package_name
-    print main_activity
+    try:
+      apk = APK(apk_path)
+      # something can be done here
+      package_name = apk.package_name
+      main_activity = apk.main_activity     # fully-qualified name here
+      print package_name
+      print main_activity
 
-    vl = multiplier.get_vendor_list()
-    dest_path = multiplier.init_file_structure(package_name, vl)
+      vl = multiplier.get_vendor_list()
+      dest_path = multiplier.init_file_structure(package_name, vl)
 
-    rmtree(place_dir)
-    multiplier.mkdir(place_dir)
-    copyfile(apk_path, os.path.join(place_dir, "apk.apk"))
+      rmtree(place_dir)
+      multiplier.mkdir(place_dir)
+      copyfile(apk_path, os.path.join(place_dir, "apk.apk"))
 
-    os.chdir(rel("./preprocess/factory/"))
-    subprocess.call(["./multiply_1.sh"])
+      os.chdir(rel("./preprocess/factory/"))
+      subprocess.call(["./multiply_1.sh"])
 
-    if inject.place_injector():
-      main_activity_path = inject.name2path(main_activity)
-      inject.inject_main_activity(main_activity_path)
-    else:
-      raise OSError
+      if inject.place_injector():
+        main_activity_path = inject.name2path(main_activity)
+        inject.inject_main_activity(main_activity_path)
+      else:
+        raise OSError
 
-    subprocess.call(["./multiply_2.sh"])
-    os.chdir(os.path.dirname(rel(__file__)))
+      subprocess.call(["./multiply_2.sh"])
+      os.chdir(os.path.dirname(rel("../../")))
 
-    for mapk in u_list_dir(place_dir):
-      name = os.path.basename(mapk)
-      copyfile(mapk, os.path.join(dest_path, name))
+      for mapk in u_list_dir(place_dir):
+        name = os.path.basename(mapk)
+        copyfile(mapk, os.path.join(dest_path, name))
 
-    print "----------------------------------------"
-    print package_name, "multiplication step done!"
-    print "----------------------------------------"
+      print "----------------------------------------"
+      print package_name, "multiplication step done!"
+      print "----------------------------------------"
+
+    except Exception:
+      print 
+      print apk_path, "is broken..."
+      print "skipping..."
+      broken_list.append(apk_path)
+      print
+  
+  print "unproceeded apps:", broken_list
 
 
 def unpack_apk(package_path, outdir):
@@ -108,7 +121,7 @@ def tamper_it(from_path, to_path, working_dir):
 
   os.chdir(working_dir)
   subprocess.call(["./pack.sh"])
-  os.chdir(os.path.dirname(rel(__file__)))
+  os.chdir(script_dir)
 
   for f in ["res", "man", "sma"]:
     f_src = os.path.join(working_dir, f+".apk")
@@ -148,4 +161,20 @@ if __name__ == "__main__":
   # deal with arg
   #multiply()
   #tamper_apk("/home/hector/playground/test/002.apk")
-  do_tamper()
+  #do_tamper()
+  if len(sys.argv) != 2 or not sys.argv[1] in ["multiply", "tamper"]:
+    print
+    print "usage: python preprocess.py <multiply or tamper>"
+    print
+  elif sys.argv[1] == "multiply":
+    print
+    print "start multiplying..."
+    multiply()
+    print "multiplying done..."
+    print
+  elif sys.argv[1] == "tamper":
+    print
+    print "start tampering..."
+    do_tamper()
+    print "tampering done..."
+    print

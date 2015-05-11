@@ -3,11 +3,49 @@ import subprocess
 import re
 import socket
 import struct
+import threading
 import pprint
+from time import sleep
 
 class Network:
   def __init__(self):
     self.connection_pool = {}
+    self.turn_off()
+    self.thread = None
+    self.running = False
+
+
+  def refresh(self):
+    self.__init__()
+
+
+  def turn_on(self):
+    self.on = True
+    self.update_connection_info()
+
+
+  def turn_off(self):
+    self.on = False
+
+
+  def run(self):
+    while self.running:
+      if self.on:
+        self.update_connection_info()
+      sleep(1)
+
+
+  def thread_up(self):
+    self.thread = threading.Thread(target=self.run)
+    self.running = True
+    self.thread.start()
+
+
+  def thread_down(self):
+    if self.running:
+      self.running = False
+      self.thread.join()
+      self.thread = None
 
 
   def get_ip_info(self, ip_str):
@@ -30,32 +68,43 @@ class Network:
 
 
   def get_dst_ip(self):
-    p = subprocess.Popen(["sudo", "lsof", "-i", "tcp", "-c", "VBoxHeadl",
-                          "-n", "-a"], stdout=subprocess.PIPE)
+    p = subprocess.Popen(["sudo", "lsof", "-i", "tcp", "-c", "VBoxHeadl", "-n",
+                          "-a"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
     out, err = p.communicate()
 
     ips = []
-    if err is None:
-      for line in out.split("VBoxHeadl"):
-        if "->" in line:
-          ip = line.split("->")[1].split(":")[0]
-          ips.append(ip)
+    print out
+    for line in out.split("VBoxHeadl"):
+      if "->" in line:
+        ip = line.split("->")[1].split(":")[0]
+        ips.append(ip)
 
     return ips
 
 
   def update_connection_info(self):
     for ip in self.get_dst_ip():
+      print ip
       if not ip in self.connection_pool:
         self.connection_pool[ip] = {}
 
 
   def get_connection(self):
     for ip in self.connection_pool:
-      if self.connection_pool[ip] != {}:
+      if self.connection_pool[ip] == {}:
         self.connection_pool[ip] = self.get_ip_info(ip)
     return self.connection_pool
+
+
+  def get_masked_connection(self):
+    tags = ["China Unicom",
+            "China Telecom",
+            "China Education and Research Network Center",
+            "Province Network"]
+    conns = [v for v in self.get_connection().values()
+             if not any([tag in v["org"] for tag in tags])]
+    return conns
 
 
 def hex2ip(hex_string):
@@ -104,14 +153,13 @@ def strace_socket(pid):
 
 if __name__ == "__main__":
   pp = pprint.PrettyPrinter()
-  tags = ["China Unicom",
-          "China Telecom",
-          "China Education and Research Network Center",
-          "Province Network"]
   nw = Network()
-  nw.update_connection_info()
-  conns = [v for v in nw.get_connection().values()
-           if not any([tag in v["org"] for tag in tags])]
+  nw.thread_up()
+  nw.turn_on()
+  sleep(5)
+  conns = nw.get_masked_connection()
   for conn in conns:
     pp.pprint(conn)
-
+  print
+  nw.refresh()
+  nw.thread_down()

@@ -55,8 +55,8 @@ class Meow:
   def turn_off(self):
     self.on = False
     print "Kitty turned off with", self.trigger_sig
-    self.take_note()
     self.trigger_sig = ""
+    return self.take_note()
 
 
   def refresh(self):
@@ -70,6 +70,7 @@ class Meow:
     print "started time :", self.started_time
     print "logcat clear record :", self.log_clear_note
     print "------------------------------------"
+    return self.trigger_time, self.started_time, self.log_clear_note
 
 
   def clear(self):

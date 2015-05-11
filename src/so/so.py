@@ -3,10 +3,7 @@ import subprocess
 from shutil import rmtree
 import hashlib
 
-
-def rel(relpath):
-  return os.path.join(os.path.dirname(os.path.abspath(__file__)),relpath)
-
+md5_dir = "/home/hector/temp/md5"
 
 def unpack_apk(package_path, outdir):
   p = subprocess.Popen(["apktool", "d", "-o", outdir, package_path],
@@ -32,7 +29,7 @@ def get_so_md5(apk_file):
   Assume apk_file holds absolute file path
   """
   so_md5s = {}
-  unpack_path = rel(os.path.join("./md5", "apk"))
+  unpack_path = os.path.join(md5_dir, "apk")
   unpack_apk(apk_file, unpack_path)
   lib_path = os.path.join(unpack_path, "lib", "armeabi")
 

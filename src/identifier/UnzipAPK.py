@@ -39,12 +39,15 @@ class UnzipAPK():
       tmp = tmp.split('" ')[0].replace('"', "")
       if ">" in tmp:
         tmp = tmp.split('>')[0]
+      tmp = tmp.encode("ascii", "ignore")
       if tmp.startswith("."):
         activities.append(packagename + tmp)
       elif tmp.startswith(packagename):
         activities.append(tmp)
+      elif not "." in tmp:
+        activities.append(packagename + "." + tmp)
       else:
-        activities.append(packagename + '.' + tmp)
+        activities.append(tmp)
     return activities
 
 
