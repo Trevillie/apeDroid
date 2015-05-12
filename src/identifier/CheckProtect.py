@@ -58,12 +58,14 @@ class CheckProtect:
     class_num = len(class_set)
     activity_num = len(activity_set)
     exclude_num = len(exclude_set)
-    exclude_ratio = round(exclude_num/activity_num, 3)
+    if activity_num != 0:
+      exclude_ratio = round(exclude_num/activity_num, 3)
+    else:
+      exclude_ratio = 1
     self.ratio = exclude_ratio
     self.class_num = class_num
     self.exclude_num = exclude_num
     self.activity_num = activity_num
-    print class_set
 
     print "--------------------------------------------------------"
     print "class number    :", class_num
@@ -94,7 +96,8 @@ class CheckProtect:
 
 
   def get_record(self):
-    return [self.package_name,
+    return [self.unzip_apk_obj.apk_name,
+            self.package_name,
             str(self.class_num),
             str(self.activity_num),
             str(self.exclude_num),
@@ -107,23 +110,27 @@ if __name__ == "__main__":
   ori_apk_path = "../preprocess/ori_apk"
   unpack_dir = "./unpack"
   record_list = "./record.list"
+  err_log = "./errlog"
   if len(sys.argv) == 2:
     if os.path.exists(sys.argv[1]):
       ori_apk_path = sys.argv[1]
+      record_list = os.path.join("./result",
+                                 os.path.basename(sys.argv[1])+".result")
+      unpack_dir  = os.path.basename(sys.argv[1])+"_unpack"
 
   names = os.listdir(ori_apk_path)
   print names
   apks = [os.path.join(ori_apk_path, name) for name in names]
-  with open(record_list, "w") as handle:
+  with open(record_list, "a") as handle:
     for apk in apks:
-      checker = CheckProtect(apk, unpack_dir)
-      print checker.get_protector_name()
-      print
-      handle.write(", ".join(checker.get_record())+"\r\n")
-      rmtree(unpack_dir, ignore_errors=True)
-      if not os.path.exists(unpack_dir):
-        os.makedirs(unpack_dir)
-
-  exit()
-  print CheckProtect('../../apps/news.list/001.apk',
-                     "../../temp/unzipdir/news_reading/").get_protector_name()
+      try:
+        if not os.path.exists(unpack_dir):
+          os.makedirs(unpack_dir)
+        checker = CheckProtect(apk, unpack_dir)
+        print checker.get_protector_name()
+        print
+        handle.write(", ".join(checker.get_record())+"\r\n")
+        rmtree(unpack_dir, ignore_errors=True)
+      except TypeError:
+        with open(err_log, "a") as err_handle:
+          err_handle.write(", ".join([apk, record_list])+"\r\n")

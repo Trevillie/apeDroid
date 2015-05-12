@@ -70,13 +70,31 @@ def is_up(procs, name, verbose=True):
     return True
 
 
-def network_peek():
+def start_network_peek(nw, verbose=True):
+  nw.thread_up()
+  nw.turn_on()
+  if verbose:
+    print
+    print "Network Peeking Started..."
+    print
+
+
+def stop_network_peek(nw, verbose=True):
   """
   This is used in the context of an apk runtime
-  Call this at the beginning and end app runtime, then group the result
-  @r: dictionary, ip(filtered) -> dict{tag->value}
+  @r: list of dictionary, [dict{tag->value}]
   """
-  pass
+  nw.turn_off()
+  nw.thread_down()
+  conns = nw.get_masked_connection()
+  if verbose:
+    print
+    print "This app was connected with the following ips via tcp connection:"
+    for conn in conns:
+      pp.pprint(conn)
+    print
+  nw.refresh()
+  return conns
 
 
 def so_index(sample, brand_name):

@@ -32,7 +32,7 @@ class Network:
     while self.running:
       if self.on:
         self.update_connection_info()
-      sleep(1)
+      sleep(2)
 
 
   def thread_up(self):
@@ -74,7 +74,6 @@ class Network:
     out, err = p.communicate()
 
     ips = []
-    print out
     for line in out.split("VBoxHeadl"):
       if "->" in line:
         ip = line.split("->")[1].split(":")[0]
@@ -85,7 +84,6 @@ class Network:
 
   def update_connection_info(self):
     for ip in self.get_dst_ip():
-      print ip
       if not ip in self.connection_pool:
         self.connection_pool[ip] = {}
 
@@ -98,8 +96,8 @@ class Network:
 
 
   def get_masked_connection(self):
-    tags = ["China Unicom",
-            "China Telecom",
+    tags = [#"China Unicom",
+            #"China Telecom",
             "China Education and Research Network Center",
             "Province Network"]
     conns = [v for v in self.get_connection().values()
@@ -156,10 +154,12 @@ if __name__ == "__main__":
   nw = Network()
   nw.thread_up()
   nw.turn_on()
-  sleep(5)
+  sleep(8)
+  nw.turn_off()
+  nw.thread_down()
   conns = nw.get_masked_connection()
+  print "----"
   for conn in conns:
     pp.pprint(conn)
   print
   nw.refresh()
-  nw.thread_down()
