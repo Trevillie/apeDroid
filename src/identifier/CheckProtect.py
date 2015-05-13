@@ -5,6 +5,8 @@ from shutil import rmtree
 import os
 import sys
 from UnzipAPK import UnzipAPK
+import zipfile
+import zlib
 
 
 class CheckProtect:
@@ -134,3 +136,9 @@ if __name__ == "__main__":
       except TypeError:
         with open(err_log, "a") as err_handle:
           err_handle.write(", ".join([apk, record_list])+"\r\n")
+      except zipfile.BadZipfile:
+        with open(err_log, "a") as err_handle:
+          err_handle.write(", ".join([apk, record_list, "BadZipfile"])+"\r\n")
+      except zlib.error:
+        with open(err_log, "a") as err_handle:
+          err_handle.write(", ".join([apk, record_list, "zlib error"])+"\r\n")
