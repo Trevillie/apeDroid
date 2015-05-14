@@ -1,4 +1,5 @@
 #!/bin/bash 
+# written by trevillie
 
 cd reactor
 

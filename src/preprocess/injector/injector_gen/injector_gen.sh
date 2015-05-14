@@ -1,4 +1,5 @@
 #!/bin/bash
+# written by trevillie
 
 javac -cp android.jar Injector.java
 dx --dex --output=Injector.dex Injector.class

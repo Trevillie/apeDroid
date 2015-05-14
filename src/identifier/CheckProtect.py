@@ -1,4 +1,5 @@
 # -*- coding:utf8 -*-
+# written by trevillie
 
 from __future__ import division
 from shutil import rmtree

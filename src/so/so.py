@@ -1,3 +1,4 @@
+# written by trevillie
 import os
 import subprocess
 from shutil import rmtree

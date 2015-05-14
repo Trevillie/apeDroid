@@ -1,4 +1,5 @@
 #!/bin/bash 
+# written by trevillie
 
 apktool b man -o man.apk
 jarsigner -storepass kuranyi -keystore ./mdy-manual.keystore -digestalg SHA1 -sigalg MD5withRSA -signedjar man_signed.apk man.apk mdy-manual

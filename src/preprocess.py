@@ -1,7 +1,4 @@
-"""
-@p1 : "multiply" or "tamper"
-"""
-
+# written by trevillie
 import os
 import sys
 import subprocess

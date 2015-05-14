@@ -1,4 +1,6 @@
 # -*- coding:utf8 -*-
+# written by trevillie
+
 import os
 import zipfile
 from AnalysisXML.AXML import AXML

@@ -1,4 +1,5 @@
 #!/bin/bash 
+# written by trevillie
 # assume only apk.apk in the folder, multiply it for three times
 
 ### 
