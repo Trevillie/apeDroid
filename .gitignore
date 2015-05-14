@@ -21,3 +21,4 @@ src/preprocess/injector/injector_gen/android.jar
 src/preprocess/injector/injector_gen/baksmali.jar
 src/preprocess/factory/reactor
 src/crawler/apks/
+src/tool

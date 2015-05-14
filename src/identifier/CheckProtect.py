@@ -108,6 +108,15 @@ class CheckProtect:
             self.protectflag]
 
 
+  def get_dict(self):
+    return {
+      "cls_num" : str(self.class_num),
+      "act_num" : str(self.activity_num),
+      "ratio"   : str(self.ratio),
+      "flag"    : str(self.protectflag)
+    }
+
+
 if __name__ == "__main__":
   ori_apk_path = "../preprocess/ori_apk"
   unpack_dir = "./unpack"

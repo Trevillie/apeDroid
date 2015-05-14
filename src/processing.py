@@ -1,6 +1,9 @@
 import os
 import pprint
 from time import sleep
+from shutil import rmtree
+import zipfile
+import zlib
 
 from controller.Device import Device
 from controller.APK import APK, APKRuntime 
@@ -8,6 +11,7 @@ from controller.Procs import Procs
 from controller.MemInfo import MemInfo
 from controller.Meow import Meow
 from network.Network import Network
+from identifier.CheckProtect import CheckProtect
 from so import so
 
 
@@ -18,6 +22,9 @@ apk_path = rel("../factory/reactor/apk.apk")
 sample_path = rel("./preprocess/samples/")
 sigs = ["ori", "inj", "res"]
 tamps = ["man", "res", "sma"]
+identifier_unpack_dir = "./identifier/processing_unpack"
+identifier_error_log  = "./identifier/processing_errors"
+
 
 def average(l):
   return float(sum(l))/max(len(l),1)
@@ -186,13 +193,46 @@ def sig_index(start_status, brand):
     return "Unknown Condition"
 
 
-def dynamic_loading_index():
-  pass
+def tamper_index(run_status):
+  """
+  @r: string, "0" for can run, "1" for can not
+  010 stands for NO anti-tamper on manifest tampering
+                    anti-tamper on resource tampering
+             adn NO anti-tamper on smali tampering
+  returns "x" when the test cannot be done
+  """
+  if not run_status["res"]:
+    return "x"
+  return "".join(str(int(run_status["tamper_"+k])) for k in tamps)
+
+
+def dynamic_loading_index(unpack_dir, apk_path, err_log):
+  try:
+    if not os.path.exists(unpack_dir):
+      os.makedirs(unpack_dir)
+    checker = CheckProtect(apk_path, unpack_dir)
+    print checker.get_protector_name()
+    records = checker.get_dict()
+  except TypeError:
+    with open(err_log, "a") as err_handle:
+      err_handle.write(", ".join([apk_path, "TypeError"])+"\r\n")
+    records = {"Nothing" : "TypeError"}
+  except zipfile.BadZipfile:
+    with open(err_log, "a") as err_handle:
+      err_handle.write(", ".join([apk_path, "BadZipfile"])+"\r\n")
+    records = {"Nothing" : "BadZipfile"}
+  except zlib.error:
+    with open(err_log, "a") as err_handle:
+      err_handle.write(", ".join([apk_path, "zlib error"])+"\r\n")
+    records = {"Nothing" : "zlib error"}
+
+  rmtree(unpack_dir, ignore_errors=True)
+  return records
 
 
 def test_can_run(sample, procs, test=False):
   """
-  @r: dictionary: "res" -> True/False
+  @r: dictionary: "res" -> True/False, same topology as sample structure
   """
   result = {}
   for item in sample:
@@ -359,7 +399,7 @@ def test_res(apk_path, procs, mems, verbose=True):
     print "More than one main process..."
     print "Skipping Anti_Debugging Test..."
 
-  ret["anti_debugging"] = anti_debugging_status
+  ret["debug"] = anti_debugging_status
 
   # clean things up
   sleep(5)
@@ -407,6 +447,42 @@ def test_injected(apk_path, procs, logs):
   return startup_cost, log_clear
 
 
+def work_on_one_brand(sample, run_status, procs, mems, logs, nets):
+  """
+  Suppose you have the whole package of apps by one brand
+  ONLY use key of "ori", "res", "inj", "tamper_"[...]
+  Let nothing be added in when thing goes wrong
+  Be ready to except KeyError when analysing with the function
+  """
+  info = {}
+  start_network_peek(nets)
+
+  if run_status["res"]:
+    res_info = test_res(sample["res"], procs, mems)
+    for k in res_info:
+      info[k] = res_info[k]
+
+  dynamic_info = dynamic_loading_index(identifier_unpack_dir, sample["res"],
+                                       identifier_error_log)
+  info["dynamic_loading"] = dynamic_info
+
+  tamper_info = tamper_index(run_status)
+  if tamper_info != "x": info["tamper"] = tamper_info
+
+  if run_status["inj"]:
+    startup_cost, log_clear = test_injected(sample["inj"], procs, logs)
+    bool2str = lambda x: "1" if x else "0"
+    levels = ["V", "D", "I", "W", "E"]
+    info["startup_cost"] = str(startup_cost)
+    info["log_clear"] = "".join([bool2str(log_clear[l]) for l in levels])
+  else:
+    info["startup_cost"] = "Can Not Measure"
+    info["log_clear"] = "Can Not Measure"
+
+  info["network"] = stop_network_peek(nets)
+  return info
+
+
 if __name__ == "__main__":
   # AVD Checking...
   dev = Device()
@@ -430,15 +506,26 @@ if __name__ == "__main__":
   for sample_path in list_dir(sample_path):
     print sample_path
     sample = get_sample_structure(sample_path)
-    pp.pprint(sample)
+    # pp.pprint(sample)
+    run_status = test_can_run(sample, proc_service)
 
-    print
-    print
-    print test_injected(sample["inj"], proc_service, log_service)
-    #pp.pprint(test_res(sample["res"], proc_service, mem_service))
-    #pp.pprint(test_can_run(sample, proc_service))
+    # vendors == ["baidu", "bangcle", ...]
+    vendors = [k for k in sample.keys()
+               if not k.startswith("tamper_") and not k in sigs]
+    sample_info = {}
 
-    #print sig_index(sample, "baidu", proc_service)
-    #print so_index(sample, "baidu")
-   
-    #handle_sample(["ori"], sample, proc_service, mem_service, log_service)
+    ori_info = work_on_one_brand(sample, run_status, proc_service,
+                                 mem_service, log_service, network_service)
+    sample_info["original"] = ori_info
+
+    # brand == str(vendor name)
+    for brand in vendors:
+      # standalone test
+      info = work_on_one_brand(sample[brand], run_status[brand], proc_service,
+                               mem_service, log_service, network_service)
+      pp.pprint(info)
+
+      # comparison test
+      info["so"] = so_index(sample, brand)              # bool
+      info["signature"] = sig_index(run_status, brand)  # str
+      sample_info[brand] = info
