@@ -91,12 +91,39 @@ def tamper_sma(apk_dir, main_activity):
   smali_path = os.path.join(apk_dir, "smali")
   if inject.place_injector(smali_path):
     main_activity_path = inject.name2path(main_activity, smali_path=smali_path)
-    inject.inject_main_activity(main_activity_path)
+    if os.path.exists(main_activity_path):
+      print "Injecting main activity", main_activity_path
+      inject.inject_main_activity(main_activity_path)
+    else:
+      print "Main activity hidden, fining another smali file to inject..."
+      smalis = find_smali_to_inject(smali_path)
+      if len(smalis) > 0:
+        print "Found smali file", smalis[0]
+        print "Injecting..."
+        inject.inject_main_activity(smalis[0])
+      else:
+        print "No suitable smali file found..."
     print "Injection Complete..."
   else:
     raise OSError
 
 
+def find_smali_to_inject(dir):
+  p = subprocess.Popen(["grep", "-lir", ".*\.method.*onCreate()V.*", dir],
+                       stdout=subprocess.PIPE)
+  p.wait()
+  out, err = p.communicate()
+
+  smali_paths = []
+  if err is None:
+    for line in out.split("\n"):
+      path = line.strip()
+      if path != "":
+        smali_paths.append(path)
+  return smali_paths
+
+
 if __name__ == "__main__":
+  print find_smali_to_inject("/home/hector/playground/tamper/apk_res_bangcle/smali/com")
   #tamper_man("./002/")
-  tamper_sma("./002/", "com.tencent.news.activity.SplashActivity")
+  #tamper_sma("./002/", "com.tencent.news.activity.SplashActivity")

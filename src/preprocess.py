@@ -140,11 +140,15 @@ def do_tamper():
     raise OSError
   
   apk_res_paths = []
+  print "Files to work on:"
 
   for line in out.split("\n"):
     apk_res_path = line.strip()
     if apk_res_path != "":
       apk_res_paths.append(apk_res_path)
+      print apk_res_path
+
+  print
 
   for apk_res_path in apk_res_paths:
     tamper_dir = os.path.join(os.path.dirname(apk_res_path), "tamper")

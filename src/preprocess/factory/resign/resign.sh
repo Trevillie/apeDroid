@@ -1,5 +1,4 @@
 #!/bin/bash
-# written by trevillie
 
 rename "s/\.apk//g" *
 apks=$(ls -I *.sh)
@@ -12,11 +11,18 @@ do
 
   echo "Signing $apk..."
   signed_name="apk_${operation}_${brand}.apk"
+  temp_name=.tempapk
 
-  jarsigner -storepass kuranyi -keystore ../mdy-manual.keystore -digestalg SHA1 -sigalg MD5withRSA -signedjar $signed_name $apk mdy-manual
+  jarsigner -storepass kuranyi -keystore ../mdy-manual.keystore -digestalg SHA1 -sigalg MD5withRSA -signedjar $temp_name $apk mdy-manual
   echo "$signed_name signed..."
+
+  zipalign 4 $temp_name $signed_name
+  echo "zipalign finished..."
+
   rm $apk
+  rm $temp_name
   echo "$apk is removed..."
+
   echo "--------------------"
 done
 
