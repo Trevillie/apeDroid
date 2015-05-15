@@ -332,6 +332,7 @@ def test_res(apk_path, procs, mems, verbose=True):
       anti_debugging_status["can_trace"] = True
       print "The main process is not being traced by any other process now."
       print "Try stracing", main_process_info["pid"]
+      sleep(3)
       return_code = procs.strace_process(main_process_info["pid"], 8)
 
       if return_code == "succ":
@@ -375,6 +376,7 @@ def test_res(apk_path, procs, mems, verbose=True):
         print "Main process still runs."
         print "The main process is not being traced by any other process now."
         print "Try stracing", main_process_info["pid"]
+        sleep(3)
         return_code = procs.strace_process(main_process_info["pid"], 8)
 
         if return_code == "succ":
