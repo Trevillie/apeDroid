@@ -137,24 +137,28 @@ def can_run(apk_path, procs, verbose=True):
   if verbose:
     print
     print "testing whether", apk_path, "can run or not..."
+    print apk_path
+    print "waiting..."
+    print
+  sleep(10)
 
   apk = APK(apk_path)
   apk_runtime = APKRuntime(apk)
   ret = False
-  apk_runtime.install()
-  sleep(5)
 
-  for i in range(2):
+  for i in range(3):
+    apk_runtime.install()
+    sleep(5)
     apk_runtime.start()
     sleep(3)
     if is_up(procs, apk.package_name):
       ret = True
       break
-    u = procs.get_user(apk.package_name)
-    procs.kill_user(u)
     sleep(3)
+    apk_runtime.uninstall()
 
-  apk_runtime.uninstall()
+  if ret:
+    apk_runtime.uninstall()
   return ret
 
 
@@ -245,7 +249,7 @@ def test_can_run(sample, procs, test=False):
       else:
         result[item] = can_run(sample[item], procs)
     else:
-      result[item] = test_can_run(sample[item], procs)
+      result[item] = test_can_run(sample[item], procs, test=test)
   return result
 
 
@@ -279,7 +283,6 @@ def test_res(apk_path, procs, mems, verbose=True):
   # return value in float, KB
   print "Checking Memory Information..."
   pss_bucket = []
-  uss_bucket = []
   for i in range(3):
     u = procs.get_user(apk.package_name)
     pids, names = procs.get_user_procs(u)
@@ -291,14 +294,13 @@ def test_res(apk_path, procs, mems, verbose=True):
       print "pids :", pids
       print "num  :", len(pids)
       print "name :", names
-    pss, uss = mems.get_pids_mem(mems.get_mem_info(), pids, verbose=True)
+    #pss, uss = mems.get_pids_mem(mems.get_mem_info(), pids, verbose=True)
+    pss = mems.get_pids_mem(pids, verbose=True)
     pss_bucket.append(pss)
-    uss_bucket.append(uss)
     sleep(3)
 
   ret["proc_num"] = len(pids)
-  ret["memory"] = {"pss": average(pss_bucket),
-                   "uss": average(uss_bucket)}
+  ret["memory"] = average(pss_bucket)
 
   # anti-bebugging
   anti_debugging_status = {
@@ -321,6 +323,7 @@ def test_res(apk_path, procs, mems, verbose=True):
   pids, names = procs.get_user_procs(u)
   mpis = procs.get_main_process_info(apk.package_name)
   if len(mpis) == 1:
+    anti_debugging_status["tested"] = True
     main_process_info = mpis[0]
     tracerpid = procs.process_trace_info(main_process_info["pid"])
     print "TracerPid for", main_process_info["pid"], "is", tracerpid
@@ -397,6 +400,7 @@ def test_res(apk_path, procs, mems, verbose=True):
     print "Anti-Debugging Test Ends here."
 
   else:
+    anti_debugging_status["tested"] = False
     print "More than one main process..."
     print "Skipping Anti_Debugging Test..."
 
@@ -504,23 +508,26 @@ if __name__ == "__main__":
 
   # Set Up Apk
   pp = pprint.PrettyPrinter(indent=4)
+  samples_info = {}
   for sample_path in list_dir(sample_path):
     print sample_path
     sample = get_sample_structure(sample_path)
     # pp.pprint(sample)
-    run_status = test_can_run(sample, proc_service)
+    run_status = test_can_run(sample, proc_service, test=True)
 
     # vendors == ["baidu", "bangcle", ...]
     vendors = [k for k in sample.keys()
                if not k.startswith("tamper_") and not k in sigs]
     sample_info = {}
 
+    sleep(15)
     ori_info = work_on_one_brand(sample, run_status, proc_service,
                                  mem_service, log_service, network_service)
     sample_info["original"] = ori_info
 
     # brand == str(vendor name)
     for brand in vendors:
+      sleep(15)
       # standalone test
       info = work_on_one_brand(sample[brand], run_status[brand], proc_service,
                                mem_service, log_service, network_service)
@@ -530,3 +537,7 @@ if __name__ == "__main__":
       info["so"] = so_index(sample, brand)              # bool
       info["signature"] = sig_index(run_status, brand)  # str
       sample_info[brand] = info
+
+    samples_info[os.path.basename(sample_path)] = sample_info
+
+  pp.pprint(samples_info)

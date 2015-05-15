@@ -145,6 +145,7 @@ class Procs:
     ps_in_dict = [self._tup2dict(proc) for proc in procs]
     pss = [ps for ps in ps_in_dict if package_name == ps["name"]
                                       and self.zygote_pid == ps["ppid"]]
+    print "main_process", pss
     return pss
     
 
