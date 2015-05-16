@@ -13,6 +13,7 @@ from controller.MemInfo import MemInfo
 from controller.Meow import Meow
 from network.Network import Network
 from identifier.CheckProtect import CheckProtect
+from Formatter import Formatter
 from so import so
 
 
@@ -515,7 +516,7 @@ if __name__ == "__main__":
     print sample_path
     sample = get_sample_structure(sample_path)
     # pp.pprint(sample)
-    run_status = test_can_run(sample, proc_service, test=True)
+    run_status = test_can_run(sample, proc_service, test=False)
 
     # vendors == ["baidu", "bangcle", ...]
     vendors = [k for k in sample.keys()
@@ -543,3 +544,9 @@ if __name__ == "__main__":
     samples_info[os.path.basename(sample_path)] = sample_info
 
   pp.pprint(samples_info)
+
+  f = Formatter()
+  for k in samples_info:
+    f.update_sample(samples_info[k])
+    with open(os.path.join("./", k), "w") as handle:
+      f.write_formatted_info(handle)
