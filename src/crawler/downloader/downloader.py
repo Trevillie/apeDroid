@@ -55,9 +55,9 @@ class Downloader(threading.Thread):
           print "       " + dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
           print "----------------------------------"
         else:
-          self.work_queue_lock.acquire()
+          work_queue_lock.acquire()
           self.work_queue.put([self.rank, self.url, self.name])
-          self.work_queue_lock.release()
+          work_queue_lock.release()
       else:
         work_queue_lock.release()
     print("%s: received exit event." % self.getName())
@@ -129,9 +129,13 @@ class Monitor(threading.Thread):
 
 def get_undownloaded_url(apk_list):
   undownloaded_urls = []
+  downloaded_ranks = [name.split("|")[0] for name in os.listdir(sys.argv[2])
+                      if name.endswith("apk")]
   with open(apk_list) as apks:
     for apk in apks:
       [rank, name, version, down_num, url] = apk.strip().split("^")
+      if rank in downloaded_ranks:
+        continue
       undownloaded_urls.append([rank, url, name])
   return undownloaded_urls
 

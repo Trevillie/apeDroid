@@ -22,11 +22,13 @@ def rel(relpath):
 
 apk_path = rel("../factory/reactor/apk.apk")
 sample_path = rel("./preprocess/samples/")
+record_path = rel("./preprocess/can_run_record")
 sigs = ["ori", "inj", "res"]
 tamps = ["man", "res", "sma"]
 identifier_unpack_dir = "./identifier/processing_unpack"
 identifier_error_log  = "./identifier/processing_errors"
 
+pre_status = {}
 
 def average(l):
   return float(sum(l))/max(len(l),1)
@@ -248,7 +250,14 @@ def test_can_run(sample, procs, test=False):
       if test:
         result[item] = True
       else:
-        result[item] = can_run(sample[item], procs)
+        if sample[item] in pre_status:
+          result[item] = pre_status[sample[item]]
+        else:
+          result[item] = can_run(sample[item], procs)
+          pre_status[sample[item]] = result[item]
+          with open(record_path, "a") as handle:
+            handle.write(", ".join([sample[item],
+                                    "T" if result[item] else "F"])+"\r\n")
     else:
       result[item] = test_can_run(sample[item], procs, test=test)
   return result
@@ -509,6 +518,15 @@ if __name__ == "__main__":
 
   log_service.thread_up()
 
+  with open(record_path, "r") as handle:
+    for line in handle:
+      if line.strip() == "":
+        continue
+      p, r = line.strip().split(", ")
+      pre_status[p] = True if r == "T" else False
+
+  f = Formatter()
+
   # Set Up Apk
   pp = pprint.PrettyPrinter(indent=4)
   samples_info = {}
@@ -518,12 +536,14 @@ if __name__ == "__main__":
     # pp.pprint(sample)
     run_status = test_can_run(sample, proc_service, test=False)
 
+    continue
+
     # vendors == ["baidu", "bangcle", ...]
     vendors = [k for k in sample.keys()
                if not k.startswith("tamper_") and not k in sigs]
     sample_info = {}
 
-    sleep(15)
+    sleep(30)
     ori_info = work_on_one_brand(sample, run_status, proc_service,
                                  mem_service, log_service, network_service)
     sample_info["original"] = ori_info
@@ -541,12 +561,12 @@ if __name__ == "__main__":
       info["signature"] = sig_index(run_status, brand)  # str
       sample_info[brand] = info
 
-    samples_info[os.path.basename(sample_path)] = sample_info
+    package_full_name = os.path.basename(sample_path)
+    samples_info[package_full_name] = sample_info
+    f.update_sample(sample_info)
+    with open(os.path.join("./", package_full_name+"_metrics"), "w") as handle:
+      f.write_formatted_info(handle)
 
   pp.pprint(samples_info)
 
-  f = Formatter()
-  for k in samples_info:
-    f.update_sample(samples_info[k])
-    with open(os.path.join("./", k), "w") as handle:
-      f.write_formatted_info(handle)
+  log_service.thread_down()

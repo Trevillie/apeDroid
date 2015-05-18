@@ -21,8 +21,8 @@ def main():
   apk_list_extension = ".list"
   url_head = "http://www.anzhi.com/dl_app.php?s="
   url_tail = "&n=5"
-  page_count = 7
-  apk_count = 100
+  page_count = 34
+  apk_count = 500
   count = 0
   dot = "^"
 

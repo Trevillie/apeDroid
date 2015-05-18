@@ -29,6 +29,7 @@ class Meow:
     self.log_clear_sig = "Trevillie"
     self.started_sig = "apeDroid"
     self.trigger_sig = ""
+    self.up = False
 
     self.on = False
     
@@ -88,13 +89,22 @@ class Meow:
 
 
   def thread_up(self):
+    if self.up:
+      return
+    self.up = True
     t = threading.Thread(target=self.run)
     t.start()
+
+
+  def thread_down(self):
+    self.up = False
 
 
   def run(self):
     input = os.popen("adb logcat -v time")
     while True:
+      if not self.up:
+        break
       try:
         line = input.readline()
       except KeyboardInterrupt:
