@@ -14,7 +14,7 @@ import Queue
 import shutil
 
 
-NUM_THREAD = 5
+NUM_THREAD = 4
 work_queue_lock = threading.Lock()
 
 

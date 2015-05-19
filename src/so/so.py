@@ -3,6 +3,7 @@ import os
 import subprocess
 from shutil import rmtree
 import hashlib
+import zipfile as zf
 
 md5_dir = "/home/hector/temp/md5"
 
@@ -25,7 +26,7 @@ def list_dir(path):
     return []
 
 
-def get_so_md5(apk_file):
+def get_so_md5_deprecated(apk_file):
   """
   Assume apk_file holds absolute file path
   """
@@ -35,7 +36,7 @@ def get_so_md5(apk_file):
   lib_path = os.path.join(unpack_path, "lib", "armeabi")
 
   if not os.path.exists(lib_path):
-    raise OSError
+    raise OSError("Specified libs path does not exists...")
 
   for so_file in list_dir(lib_path):
     file_name = os.path.basename(so_file)
@@ -43,6 +44,22 @@ def get_so_md5(apk_file):
       so_md5s[file_name] = hashlib.md5(handle.read()).hexdigest()
 
   rmtree(unpack_path)
+  return so_md5s
+
+
+def get_so_md5(apk_file):
+  """
+  Assume apk_file holds absolute file path
+  """
+  so_md5s = {}
+  apk_zip = zf.ZipFile(apk_file)
+  so_paths = [p for p in apk_zip.namelist() if p.endswith(".so")]
+
+  for so_path in so_paths:
+    so_content = apk_zip.read(so_path)
+    so_name = os.path.basename(so_path)
+    so_md5s[so_name] = hashlib.md5(so_content).hexdigest()
+
   return so_md5s
 
 
@@ -63,8 +80,8 @@ def compare_dict(foo, bar, verbose=True):
 
 
 if __name__ == "__main__":
-  ori_md5 = get_so_md5("./jrtt_original.apk")
-  new_md5 = get_so_md5("./jrtt_protected.apk")
-  # print ori_md5
-  # print new_md5
+  ori_md5 = get_so_md5("./news_ori.apk")
+  new_md5 = get_so_md5("./news_pro.apk")
+  print ori_md5
+  print new_md5
   print compare_dict(ori_md5, new_md5)
